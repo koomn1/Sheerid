@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SheerID Verifier Tool</title>
+    <style>
+        body { background-color: #121212; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; max-width: 500px; text-align: center; }
+        h1 { color: #00e5ff; margin-bottom: 10px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 20px; }
+        input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #333; background-color: #2a2a2a; color: #fff; border-radius: 6px; box-sizing: border-box; outline: none; }
+        input[type="text"]:focus { border-color: #00e5ff; }
+        button { width: 100%; padding: 12px; background-color: #00e5ff; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { background-color: #00b3cc; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        #log { margin-top: 20px; text-align: left; background-color: #000; padding: 15px; border-radius: 6px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; display: none; white-space: pre-wrap; border: 1px solid #333; }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #000; animation: spin 1s ease-in-out infinite; margin-right: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>SheerID Verifier</h1>
+    <p>أدخل رابط التحقق (Verification URL) لبدء العملية</p>
+    <input type="text" id="sheerid_url" placeholder="https://services.sheerid.com/verify/..." dir="ltr">
+    <button id="verify_btn" onclick="startVerification()">بدء التحقق</button>
+    <div id="log"></div>
+</div>
+
+<script>
+    // ضع رابط السيرفر بتاعك هنا (اللي هنرفعه على Render)
+    const BACKEND_URL = "https://YOUR-BACKEND-URL.onrender.com/api/verify";
+
+    async function startVerification() {
+        const urlInput = document.getElementById('sheerid_url').value.trim();
+        const btn = document.getElementById('verify_btn');
+        const logBox = document.getElementById('log');
+
+        if (!urlInput || !urlInput.includes('sheerid.com/verify')) {
+            alert('الرجاء إدخال رابط SheerID صحيح');
+            return;
+        }
+
+        // تغيير حالة الواجهة
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> جاري التحقق...';
+        logBox.style.display = 'block';
+        logBox.innerHTML = '> الاتصال بالسيرفر...\n';
+
+        try {
+            const response = await fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: urlInput })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                logBox.innerHTML += `\n<span class="success">[+] تم بنجاح!</span>\n`;
+                logBox.innerHTML += data.output;
+            } else {
+                logBox.innerHTML += `\n<span class="error">[-] فشل التحقق:</span>\n`;
+                logBox.innerHTML += data.error || data.output;
+            }
+
+        } catch (error) {
+            logBox.innerHTML += `\n<span class="error">[-] خطأ في الاتصال بالسيرفر: ${error.message}</span>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'بدء التحقق';
+        }
+    }
+</script>
+
+</body>
+</html>
