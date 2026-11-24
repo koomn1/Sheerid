@@ -1,0 +1,5 @@
+Flask
+flask-cors
+httpx
+Pillow
+curl_cffi
